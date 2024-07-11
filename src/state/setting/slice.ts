@@ -6,11 +6,33 @@ export type SettingState = {
   clef: "treble" | "bass" | "mixed";
 };
 
-const initialState: SettingState = {
+const initialState: SettingState = loadStateFromLocalStorage() || {
   min: 0,
   max: 16,
   clef: "treble",
 };
+
+function loadStateFromLocalStorage(): SettingState | undefined {
+  try {
+    const serializedState = localStorage.getItem("settingState");
+    if (serializedState === null) {
+      return undefined;
+    }
+    return JSON.parse(serializedState);
+  } catch (err) {
+    console.error("Error loading state from localStorage:", err);
+    return undefined;
+  }
+}
+
+function saveStateToLocalStorage(state: SettingState): void {
+  try {
+    const serializedState = JSON.stringify(state);
+    localStorage.setItem("settingState", serializedState);
+  } catch (err) {
+    console.error("Error saving state to localStorage:", err);
+  }
+}
 
 const isValidSetting = (setting: SettingState): boolean => {
   if (setting.min > setting.max) return false;
@@ -29,6 +51,7 @@ const settingSlice = createSlice({
     setSetting: (state, action: PayloadAction<Partial<SettingState>>) => {
       const newState = { ...state, ...action.payload };
       if (isValidSetting(newState)) {
+        saveStateToLocalStorage(newState);
         return newState;
       } else {
         console.error("Invalid setting:", action.payload);

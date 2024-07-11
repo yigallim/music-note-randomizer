@@ -3,13 +3,13 @@ import { setSetting, SettingState } from "./slice";
 
 const useSetting = (): [SettingState, (newSetting: SettingState) => void] => {
   const dispatch = useAppDispatch();
-  const settings = useAppSelector((state) => state.setting);
+  const setting = useAppSelector((state) => state.setting);
 
   const updateSetting = (newSetting: SettingState) => {
     dispatch(setSetting(newSetting));
   };
 
-  return [settings, updateSetting];
+  return [setting, updateSetting];
 };
 
 export default useSetting;

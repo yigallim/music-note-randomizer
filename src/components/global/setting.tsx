@@ -36,8 +36,8 @@ const Setting = () => {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Settings strokeWidth={1.6} className="h-[1.2rem] w-[1.2rem]" />
+        <Button variant="outline" size="icon" className="h-8 w-8 md:h-10 md:w-10">
+          <Settings strokeWidth={1.6} className="h-[1rem] w-[1rem] md:h-[1.2rem] md:w-[1.2rem]" />
         </Button>
       </SheetTrigger>
 
@@ -57,7 +57,7 @@ const Setting = () => {
                 </div>
               </div>
               <Slider
-                defaultValue={[0, 16]}
+                defaultValue={[setting.min, setting.max]}
                 minStepsBetweenThumbs={0}
                 max={16}
                 min={0}

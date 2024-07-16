@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 import useSetting from "@/state/setting/hook";
@@ -17,20 +18,38 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const Setting = () => {
   const [setting, setSetting] = useSetting();
+  const [localSetting, setLocalSetting] = useState(setting);
+
+  useEffect(() => {
+    setLocalSetting(setting);
+  }, [setting]);
 
   const handleRangeChange = (range: number[]) => {
     const [min, max] = range;
-    setSetting({
-      ...setting,
+    setLocalSetting({
+      ...localSetting,
       min,
       max,
     });
   };
+
   const handleClefChange = (value: "treble" | "bass" | "mixed") => {
-    setSetting({
-      ...setting,
+    setLocalSetting({
+      ...localSetting,
       clef: value,
     });
+  };
+
+  const handleBpmChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const bpm = Number(event.target.value);
+    setLocalSetting({
+      ...localSetting,
+      bpm,
+    });
+  };
+
+  const handleSave = () => {
+    setSetting(localSetting);
   };
 
   return (
@@ -52,12 +71,12 @@ const Setting = () => {
               <div className="mb-2 flex justify-between items-center">
                 <p className="font-medium">Note Ranges</p>
                 <div>
-                  <p>Min: {setting.min}</p>
-                  <p>Max: {setting.max}</p>
+                  <p>Min: {localSetting.min}</p>
+                  <p>Max: {localSetting.max}</p>
                 </div>
               </div>
               <Slider
-                defaultValue={[setting.min, setting.max]}
+                defaultValue={[localSetting.min, localSetting.max]}
                 minStepsBetweenThumbs={0}
                 max={16}
                 min={0}
@@ -69,7 +88,7 @@ const Setting = () => {
 
             <div className="grid items-center gap-3">
               <Label>Clef</Label>
-              <RadioGroup defaultValue={setting.clef} onValueChange={handleClefChange}>
+              <RadioGroup defaultValue={localSetting.clef} onValueChange={handleClefChange}>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="treble" id="treble" />
                   <Label htmlFor="treble">Treble</Label>
@@ -87,7 +106,19 @@ const Setting = () => {
 
             <div className="grid items-center gap-1.5">
               <Label htmlFor="quantity">Beats Per Minute</Label>
-              <Input type="number" id="quantity" defaultValue="60" min="1" />
+              <Input
+                type="number"
+                id="quantity"
+                value={localSetting.bpm}
+                min="1"
+                onChange={handleBpmChange}
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <Button size="sm" className="text-xs" onClick={handleSave}>
+                Save Changes
+              </Button>
             </div>
           </div>
         </ScrollArea>

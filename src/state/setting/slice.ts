@@ -4,12 +4,14 @@ export type SettingState = {
   min: number;
   max: number;
   clef: "treble" | "bass" | "mixed";
+  bpm: number;
 };
 
 const initialState: SettingState = loadStateFromLocalStorage() || {
   min: 0,
   max: 16,
   clef: "treble",
+  bpm: 90,
 };
 
 function loadStateFromLocalStorage(): SettingState | undefined {
@@ -41,6 +43,7 @@ const isValidSetting = (setting: SettingState): boolean => {
 
   const validClefs = ["treble", "bass", "mixed"];
   if (!validClefs.includes(setting.clef)) return false;
+
   return true;
 };
 

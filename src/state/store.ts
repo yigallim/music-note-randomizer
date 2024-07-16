@@ -1,9 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
 import settingReducer from "./setting/slice";
+import playReducer from "./play/slice";
 
 const store = configureStore({
   reducer: {
     setting: settingReducer,
+    play: playReducer,
   },
 });
 

@@ -11,3 +11,7 @@ body,
 #root > :only-child {
   flex: 1;
 }
+
+#cursorImg-0 {
+  height: max-content;
+}

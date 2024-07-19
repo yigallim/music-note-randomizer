@@ -40,13 +40,13 @@ const useMusicSheet = ({ musicXML, bpm, onFinish }: useMusicSheetProps): UseMusi
   const osmdInstanceRef = useRef<OpenSheetMusicDisplay | null>(null);
 
   useEffect(() => {
+    setIsLoading(true);
+
     const musicSheetContainer = document.getElementById("music-sheet") as HTMLElement;
     musicSheetContainer.innerHTML = "";
 
-    setIsLoading(true);
     const setupMusicSheet = async () => {
       const osmdInstance = new OpenSheetMusicDisplay(musicSheetContainer, {
-        backend: "svg",
         drawTitle: false,
         drawPartNames: false,
       });
@@ -63,9 +63,6 @@ const useMusicSheet = ({ musicXML, bpm, onFinish }: useMusicSheetProps): UseMusi
         await audioPlayerInstance.loadScore(osmdInstance);
         audioPlayerInstance.setBpm(bpm);
 
-        osmdInstanceRef.current = osmdInstance;
-        audioPlayerRef.current = audioPlayerInstance;
-
         audioPlayerInstance.on(PlaybackEvent.ITERATION, (notes) => {
           if (!notes.length) {
             onFinish?.();
@@ -73,9 +70,12 @@ const useMusicSheet = ({ musicXML, bpm, onFinish }: useMusicSheetProps): UseMusi
           }
         });
 
-        setIsLoading(false);
+        osmdInstanceRef.current = osmdInstance;
+        audioPlayerRef.current = audioPlayerInstance;
       } catch (error) {
         console.error("Error loading or rendering the music sheet:", error);
+      } finally {
+        setIsLoading(false);
       }
 
       const observer = new MutationObserver((mutationsList) => {

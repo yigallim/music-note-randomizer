@@ -2,7 +2,7 @@ import { SettingState } from "@/state/setting/slice";
 
 export type Clef = "treble" | "bass";
 
-const trebleNotes = [
+export const trebleNotes = [
   { step: "A", octave: 3 },
   { step: "B", octave: 3 },
   { step: "C", octave: 4 },
@@ -21,32 +21,38 @@ const trebleNotes = [
   { step: "B", octave: 5 },
   { step: "C", octave: 6 },
 ];
-const bassNotes = [
-  { step: "E", octave: 4 },
-  { step: "D", octave: 4 },
-  { step: "C", octave: 4 },
-  { step: "B", octave: 3 },
-  { step: "A", octave: 3 },
-  { step: "G", octave: 3 },
-  { step: "F", octave: 3 },
-  { step: "E", octave: 3 },
-  { step: "D", octave: 3 },
-  { step: "C", octave: 3 },
-  { step: "B", octave: 2 },
-  { step: "A", octave: 2 },
-  { step: "G", octave: 2 },
-  { step: "F", octave: 2 },
-  { step: "E", octave: 2 },
-  { step: "D", octave: 2 },
+export const bassNotes = [
   { step: "C", octave: 2 },
+  { step: "D", octave: 2 },
+  { step: "E", octave: 2 },
+  { step: "F", octave: 2 },
+  { step: "G", octave: 2 },
+  { step: "A", octave: 2 },
+  { step: "B", octave: 2 },
+  { step: "C", octave: 3 },
+  { step: "D", octave: 3 },
+  { step: "E", octave: 3 },
+  { step: "F", octave: 3 },
+  { step: "G", octave: 3 },
+  { step: "A", octave: 3 },
+  { step: "B", octave: 3 },
+  { step: "C", octave: 4 },
+  { step: "D", octave: 4 },
+  { step: "E", octave: 4 },
 ];
 
-function getRandomTrebleNote() {
-  const randomIndex = Math.floor(Math.random() * trebleNotes.length);
+if (trebleNotes.length != bassNotes.length)
+  throw "Treble Notes and Bass Notes array length must be same.";
+
+function getRandomInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function getRandomTrebleNote(min: number, max: number) {
+  const randomIndex = getRandomInt(min, max);
   return trebleNotes[randomIndex];
 }
-function getRandomBassNote() {
-  const randomIndex = Math.floor(Math.random() * bassNotes.length);
+function getRandomBassNote(min: number, max: number) {
+  const randomIndex = getRandomInt(min, max);
   return bassNotes[randomIndex];
 }
 function generateNoteXML(step: string, octave: number) {
@@ -60,16 +66,22 @@ function generateNoteXML(step: string, octave: number) {
             <type>quarter</type>
         </note>`;
 }
-function generateNotesXML(clef: Clef) {
+function generateNotesXML(clef: Clef, min: number, max: number) {
   let notesXML = "";
   const getRandomNote = clef === "treble" ? getRandomTrebleNote : getRandomBassNote;
   for (let i = 0; i < 4; i++) {
-    const { step, octave } = getRandomNote();
+    const { step, octave } = getRandomNote(min, max);
     notesXML += generateNoteXML(step, octave);
   }
   return notesXML;
 }
-function generateMeasureXML(measureNumber: number, clef: Clef, withAttribute: boolean) {
+function generateMeasureXML(
+  measureNumber: number,
+  clef: Clef,
+  withAttribute: boolean,
+  min: number,
+  max: number
+) {
   const clefAttributes = {
     treble: {
       sign: "G",
@@ -84,7 +96,7 @@ function generateMeasureXML(measureNumber: number, clef: Clef, withAttribute: bo
   if (!withAttribute) {
     return `
     <measure number="${measureNumber}">
-        ${generateNotesXML(clef)}
+        ${generateNotesXML(clef, min, max)}
     </measure>`;
   } else {
     const clefAttribute = clefAttributes[clef];
@@ -102,7 +114,7 @@ function generateMeasureXML(measureNumber: number, clef: Clef, withAttribute: bo
             </clef>
             <staff>1</staff>
         </attributes>
-        ${generateNotesXML(clef)}
+        ${generateNotesXML(clef, min, max)}
     </measure>`;
   }
 }
@@ -110,8 +122,24 @@ export function generateMusicXML(setting: SettingState) {
   let measures = "";
   const measuresCount = 44;
 
-  for (let i = 0; i < measuresCount; i++) {
-    measures += generateMeasureXML(i + 1, "treble", i == 0);
+  if (setting.clef !== "mixed") {
+    for (let i = 0; i < measuresCount; i++) {
+      measures += generateMeasureXML(i + 1, setting.clef, i == 0, setting.min, setting.max);
+    }
+  } else {
+    function isOdd(num: number) {
+      return num % 2;
+    }
+
+    const partCount = 4;
+    const measurePartCount = measuresCount / partCount;
+    let measureNumber = 1;
+    for (let i = 0; i < partCount; i++) {
+      const clef = isOdd(i) ? "bass" : "treble";
+      for (let j = 0; j < measurePartCount; j++) {
+        measures += generateMeasureXML(measureNumber++, clef, j == 0, setting.min, setting.max);
+      }
+    }
   }
 
   return `

@@ -7,12 +7,14 @@ export type SettingState = {
   bpm: number;
 };
 
-const initialState: SettingState = loadStateFromLocalStorage() || {
+const defaultState: SettingState = {
   min: 0,
   max: 16,
   clef: "treble",
   bpm: 90,
 };
+
+const initialState: SettingState = loadStateFromLocalStorage() || { ...defaultState };
 
 function loadStateFromLocalStorage(): SettingState | undefined {
   try {
@@ -38,8 +40,8 @@ function saveStateToLocalStorage(state: SettingState): void {
 
 const isValidSetting = (setting: SettingState): boolean => {
   if (setting.min > setting.max) return false;
-  if (setting.min < initialState.min) return false;
-  if (setting.max > initialState.max) return false;
+  if (setting.min < defaultState.min) return false;
+  if (setting.max > defaultState.max) return false;
 
   const validClefs = ["treble", "bass", "mixed"];
   if (!validClefs.includes(setting.clef)) return false;

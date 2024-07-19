@@ -15,6 +15,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { bassNotes, trebleNotes } from "@/utils/music-xml";
+
+function getNoteLabel({ step, octave }: { step: string; octave: number }) {
+  return step + octave;
+}
 
 const Setting = () => {
   const [setting, setSetting] = useSetting();
@@ -68,11 +73,19 @@ const Setting = () => {
           </SheetHeader>
           <div className="py-8 mx-2 pb-0 space-y-10 text-sm">
             <div className="pb-2">
-              <div className="mb-2 flex justify-between items-center">
+              <div className="mb-2 flex justify-between items-end">
                 <p className="font-medium">Note Ranges</p>
-                <div>
-                  <p>Min: {localSetting.min}</p>
-                  <p>Max: {localSetting.max}</p>
+                <div className="flex space-x-4 text-xs">
+                  <div>
+                    <p>Treble Clef</p>
+                    <p>Min: {getNoteLabel(trebleNotes[localSetting.min])}</p>
+                    <p>Max: {getNoteLabel(trebleNotes[localSetting.max])}</p>
+                  </div>
+                  <div>
+                    <p>Bass Clef</p>
+                    <p>Min: {getNoteLabel(bassNotes[localSetting.min])}</p>
+                    <p>Max: {getNoteLabel(bassNotes[localSetting.max])}</p>
+                  </div>
                 </div>
               </div>
               <Slider

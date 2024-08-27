@@ -35,74 +35,83 @@ type useMusicSheetProps = {
 };
 
 const useMusicSheet = ({ musicXML, bpm, onFinish }: useMusicSheetProps): UseMusicSheet => {
+  const previousScreenWidth = useRef(window.innerWidth);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const audioPlayerRef = useRef<AudioPlayer | null>(null);
   const osmdInstanceRef = useRef<OpenSheetMusicDisplay | null>(null);
 
-  useEffect(() => {
-    setIsLoading(true);
+  const setupMusicSheet = async () => {
+    onFinish?.();
+    stop();
 
     const musicSheetContainer = document.getElementById("music-sheet") as HTMLElement;
     musicSheetContainer.innerHTML = "";
+    const osmdInstance = new OpenSheetMusicDisplay(musicSheetContainer, {
+      autoResize: false,
+      alignRests: 1,
+      drawTitle: false,
+      drawPartNames: false,
+      followCursor: true,
+    });
 
-    const setupMusicSheet = async () => {
-      const osmdInstance = new OpenSheetMusicDisplay(musicSheetContainer, {
-        drawTitle: false,
-        drawPartNames: false,
-      });
+    const audioPlayerInstance = new AudioPlayer();
 
-      const audioPlayerInstance = new AudioPlayer();
+    try {
+      const musicXMLLoader = await fakeFetchMusicXML(musicXML);
 
-      try {
-        const musicXMLLoader = await fakeFetchMusicXML(musicXML);
+      await osmdInstance.load(musicXMLLoader);
+      osmdInstance.zoom = getZoom();
+      await osmdInstance.render();
+      //@ts-ignore
+      await audioPlayerInstance.loadScore(osmdInstance);
+      audioPlayerInstance.setBpm(bpm);
 
-        await osmdInstance.load(musicXMLLoader);
-        osmdInstance.zoom = getZoom();
-        await osmdInstance.render();
-        //@ts-ignore
-        await audioPlayerInstance.loadScore(osmdInstance);
-        audioPlayerInstance.setBpm(bpm);
-
-        audioPlayerInstance.on(PlaybackEvent.ITERATION, (notes) => {
-          if (!notes.length) {
-            onFinish?.();
-            stop();
-          }
-        });
-
-        osmdInstanceRef.current = osmdInstance;
-        audioPlayerRef.current = audioPlayerInstance;
-      } catch (error) {
-        console.error("Error loading or rendering the music sheet:", error);
-      } finally {
-        setIsLoading(false);
-      }
-
-      const observer = new MutationObserver((mutationsList) => {
-        const cursor = osmdInstance.Cursor.cursorElement;
-        for (const mutation of mutationsList) {
-          if (mutation.type === "attributes") {
-            cursor.style.height = cursor.getAttribute("height") + "px";
-          }
+      audioPlayerInstance.on(PlaybackEvent.ITERATION, (notes) => {
+        if (!notes.length) {
+          onFinish?.();
+          stop();
         }
       });
-      observer.observe(osmdInstance.Cursor.cursorElement, { attributes: true });
-    };
 
+      osmdInstanceRef.current = osmdInstance;
+      audioPlayerRef.current = audioPlayerInstance;
+    } catch (error) {
+      console.error("Error loading or rendering the music sheet:", error);
+    } finally {
+      setIsLoading(false);
+    }
+
+    const observer = new MutationObserver((mutationsList) => {
+      const cursor = osmdInstance.Cursor.cursorElement;
+      for (const mutation of mutationsList) {
+        if (mutation.type === "attributes") {
+          cursor.style.height = cursor.getAttribute("height") + "px";
+        }
+      }
+    });
+    observer.observe(osmdInstance.Cursor.cursorElement, { attributes: true });
+  };
+
+  useEffect(() => {
+    setIsLoading(true);
     setupMusicSheet();
   }, [musicXML, bpm]);
 
   useEffect(() => {
     const handleResize = debounce(() => {
-      const osmdInstance = osmdInstanceRef.current;
-      if (!osmdInstance) return;
-      const zoom = getZoom();
-      osmdInstance.zoom = zoom;
-      osmdInstance.render();
+      const screenWidthDifferences = previousScreenWidth.current - window.innerWidth;
+      if (screenWidthDifferences > 50 || screenWidthDifferences < -50) {
+        setIsLoading(true);
+        const osmdInstance = osmdInstanceRef.current;
+        if (!osmdInstance) return;
+        const zoom = getZoom();
+        osmdInstance.zoom = zoom;
+        setupMusicSheet();
+        previousScreenWidth.current = window.innerWidth;
+      }
     }, 300);
 
     window.addEventListener("resize", handleResize);
-
     return () => {
       window.removeEventListener("resize", handleResize);
     };
